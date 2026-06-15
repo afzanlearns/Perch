@@ -1,0 +1,18 @@
+{
+  "name": "perch",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": ["packages/agent", "packages/ui", "packages/electron"],
+  "bin": {
+    "perch": "./packages/agent/cli.js"
+  },
+  "scripts": {
+    "dev": "concurrently \"npm run dev --workspace=packages/agent\" \"npm run dev --workspace=packages/ui\"",
+    "build": "npm run build --workspace=packages/agent && npm run build --workspace=packages/ui",
+    "prepublish": "npm run build",
+    "electron": "npm run start --workspace=packages/electron"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

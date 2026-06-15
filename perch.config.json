@@ -1,0 +1,12 @@
+{
+  "version": "1.0",
+  "daemonPort": 7777,
+  "uiPort": 3000,
+  "pollInterval": 2000,
+  "healthCheckInterval": 5000,
+  "logBufferSize": 500,
+  "groups": [],
+  "favorites": [],
+  "notificationLevel": "error",
+  "autoStart": false
+}

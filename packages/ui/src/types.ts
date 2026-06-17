@@ -4,14 +4,14 @@ export interface ProcessInfo {
   pid: number;
   ppid?: number;
   name: string;
-  memory: number;
-  cpu: number;
+  memory: number | null;
+  cpu: number | null;
   port: number | null;
   command: string;
   groupId?: string;
   serviceId?: string;
-  cpuHistory: number[];
-  memHistory: number[];
+  cpuHistory: (number | null)[];
+  memHistory: (number | null)[];
   uptimeMs: number | null;
   startedAt: number | null;
 }
@@ -41,6 +41,12 @@ export interface GroupInfo {
   name: string;
   description?: string;
   services: ServiceInfo[];
+}
+
+export interface SystemStats {
+  cpuUsage: number;
+  totalMemMb: number;
+  usedMemMb: number;
 }
 
 export interface CrashAlert {

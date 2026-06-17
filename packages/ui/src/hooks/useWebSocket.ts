@@ -18,6 +18,7 @@ export function useWebSocket() {
   const retryCountRef = useRef(0);
 
   const setProcesses        = useStore((s) => s.setProcesses);
+  const setSystemStats      = useStore((s) => s.setSystemStats);
   const setEnv              = useStore((s) => s.setEnv);
   const setHealth           = useStore((s) => s.setHealth);
   const addLogs             = useStore((s) => s.addLogs);
@@ -58,7 +59,9 @@ export function useWebSocket() {
 
             switch (msg.type) {
               case "initial":
+                console.log("[WS-RENDERER] initial message received. msg.system:", JSON.stringify(msg.system));
                 setProcesses(msg.processes ?? []);
+                setSystemStats(msg.system ?? null);
                 setEnv(msg.env ?? {});
                 setHealth(msg.health ?? []);
                 setGroups(msg.groups ?? []);
@@ -66,7 +69,9 @@ export function useWebSocket() {
                 break;
 
               case "processes:update":
+                console.log("[WS-RENDERER] processes:update — msg.system:", JSON.stringify(msg.system));
                 setProcesses(msg.processes ?? []);
+                setSystemStats(msg.system ?? null);
                 break;
 
               case "health:update":
@@ -171,7 +176,7 @@ export function useWebSocket() {
         wsRef.current = null;
       }
     };
-  }, [setProcesses, setEnv, setHealth, addLogs, appendLog, setConnected, setError, addToast,
+  }, [setProcesses, setSystemStats, setEnv, setHealth, addLogs, appendLog, setConnected, setError, addToast,
       setGroups, setFavorites, addCrashAlert, setPortViolations, addInspectorRequest, setActiveInspectors]);
 }
 

@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { ProcessInfo, LogLine, HealthResult, GroupInfo, CrashAlert, PortViolation, InspectorRequest, ActiveInspector } from "./types";
+import type { ProcessInfo, LogLine, HealthResult, GroupInfo, CrashAlert, PortViolation, InspectorRequest, ActiveInspector, SystemStats } from "./types";
 
 interface ControlToast {
   id: string;
@@ -10,6 +10,7 @@ interface ControlToast {
 
 interface StoreState {
   processes: ProcessInfo[];
+  systemStats: SystemStats | null;
   env: Record<string, string>;
   health: Map<number, HealthResult>;
   logsBuffer: Record<number, LogLine[]>;
@@ -37,6 +38,7 @@ interface StoreState {
   activeInspectors: ActiveInspector[];
 
   setProcesses: (processes: ProcessInfo[]) => void;
+  setSystemStats: (stats: SystemStats | null) => void;
   setEnv: (env: Record<string, string>) => void;
   setHealth: (health: HealthResult[]) => void;
   addLogs: (pid: number, logs: LogLine[]) => void;
@@ -76,6 +78,7 @@ const onboardingShown = localStorage.getItem("perch-onboarding-shown");
 
 export const useStore = create<StoreState>((set) => ({
   processes: [],
+  systemStats: null,
   env: {},
   health: new Map(),
   logsBuffer: {},
@@ -98,6 +101,8 @@ export const useStore = create<StoreState>((set) => ({
   activeInspectors: [],
 
   setProcesses: (processes) => set({ processes, loading: false }),
+
+  setSystemStats: (stats) => set({ systemStats: stats }),
 
   setEnv: (env) => set({ env }),
 

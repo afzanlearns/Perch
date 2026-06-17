@@ -113,9 +113,10 @@ async function main() {
       await showStatus();
       break;
     case "ports": {
+      const showAll = process.argv.includes("--all");
       const { listPorts, printPortTable } = await import("./ports-command.js");
-      const rows = await listPorts();
-      printPortTable(rows);
+      const result = await listPorts({ all: showAll });
+      printPortTable(result, { all: showAll });
       break;
     }
     default:
@@ -126,7 +127,8 @@ async function main() {
       console.log("  perch start      Start the Perch daemon");
       console.log("  perch stop       Stop the Perch daemon");
       console.log("  perch status     Show daemon status");
-      console.log("  perch ports      List active ports and owning processes");
+      console.log("  perch ports      List listening ports and owning processes");
+      console.log("  perch ports --all   List all connections (including transient states)");
       console.log("");
       console.log("Then open http://localhost:7777");
       console.log("");

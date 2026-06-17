@@ -50,7 +50,7 @@ function PortReservationPanel() {
         <div className="settings-violations">
           {portViolations.map((v) => (
             <div key={v.port} className="settings-violation-row">
-              <span style={{ color: "var(--status-yellow)" }}>⚠</span>
+              <span style={{ color: "var(--warning)" }}>⚠</span>
               <span style={{ fontSize: "var(--text-xs)", flex: 1 }}>
                 <span className="mono-value">:{v.port}</span> expected {v.expectedLabel}, got {v.actualName}
               </span>
@@ -85,7 +85,7 @@ function PortReservationPanel() {
         />
         <button className="btn btn-ghost btn-sm" onClick={handleAdd}>Reserve</button>
       </div>
-      {status && <div style={{ fontSize: "var(--text-xs)", color: "var(--status-red)", marginTop: 4 }}>{status}</div>}
+      {status && <div style={{ fontSize: "var(--text-xs)", color: "var(--danger)", marginTop: 4 }}>{status}</div>}
     </div>
   );
 }

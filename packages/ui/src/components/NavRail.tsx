@@ -1,19 +1,10 @@
 import { useStore } from "../store";
 
-export type View = "processes" | "ports" | "logs" | "env" | "projects" | "graph" | "inspector" | "settings";
+export type View = "processes" | "ports" | "logs" | "env" | "projects" | "graph" | "inspector";
 
 interface NavRailProps {
   activeView: View;
   onViewChange: (view: View) => void;
-}
-
-function GearIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <circle cx="8" cy="8" r="2.5" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M8 2V4M8 12V14M2 8H4M12 8H14M4.5 4.5L5.5 5.5M10.5 10.5L11.5 11.5M4.5 11.5L5.5 10.5M10.5 5.5L11.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  );
 }
 
 function ProcessIcon() {
@@ -102,7 +93,6 @@ const navItems: { id: View; label: string; icon: JSX.Element }[] = [
   { id: "graph",     label: "Graph",       icon: <GraphIcon /> },
   { id: "inspector", label: "Inspector",   icon: <InspectorIcon /> },
   { id: "projects",  label: "Projects",    icon: <ProjectIcon /> },
-  { id: "settings",  label: "Settings",    icon: <GearIcon /> },
 ];
 
 export function NavRail({ activeView, onViewChange }: NavRailProps) {

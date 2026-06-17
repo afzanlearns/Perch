@@ -39,11 +39,13 @@ function SunIcon({ size }: { size: number }) {
   );
 }
 
-function GearIcon({ size }: { size: number }) {
+function SlidersIcon({ size }: { size: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <circle cx="7.5" cy="7.5" r="2.5" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M7.5 1.5V3.5M7.5 11.5V13.5M1.5 7.5H3.5M11.5 7.5H13.5M3.8 3.8L5.2 5.2M9.8 9.8L11.2 11.2M3.8 11.2L5.2 9.8M9.8 5.2L11.2 3.8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="4.5" y1="3.5" x2="4.5" y2="12.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="10.5" y1="2.5" x2="10.5" y2="11.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <circle cx="4.5" cy="6" r="2" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="10.5" cy="8" r="2" stroke="currentColor" strokeWidth="1.5" />
     </svg>
   );
 }
@@ -92,7 +94,7 @@ export function Titlebar({ onSearchOpen }: TitlebarProps) {
         </button>
 
         <button className="icon-btn" onClick={() => setShowSettings(true)} title="Settings" aria-label="Settings">
-          <GearIcon size={15} />
+          <SlidersIcon size={15} />
         </button>
       </div>
     </div>

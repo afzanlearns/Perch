@@ -6,32 +6,22 @@ import type { ProcessInfo } from "../types";
 import { sendWsMessage } from "../hooks/useWebSocket";
 import { UptimeBadge } from "./UptimeBadge";
 import { Sparkline } from "./Sparkline";
-
-function formatMemory(mb: number): string {
-  if (mb === 0) return "-";
-  if (mb >= 1024) return `${(mb / 1024).toFixed(1)} GB`;
-  return `${mb.toFixed(0)} MB`;
-}
-
-function formatCpu(cpu: number): string {
-  if (cpu === 0) return "-";
-  return `${cpu.toFixed(1)}%`;
-}
+import { formatMemory, formatCpu } from "../utils/format";
 
 
 
 function getStatusClass(p: ProcessInfo, healthStatus?: string): string {
   if (healthStatus === "unhealthy" || healthStatus === "unreachable") return "crashed";
-  if (p.cpu > 80) return "high-cpu";
-  if (p.memory > 1024 * 2) return "high-mem";
+  if ((p.cpu ?? 0) > 80) return "high-cpu";
+  if ((p.memory ?? 0) > 1024 * 2) return "high-mem";
   return "";
 }
 
 function getStatusDot(p: ProcessInfo, healthStatus?: string): "running" | "warning" | "error" | "idle" {
   if (healthStatus === "unhealthy" || healthStatus === "unreachable") return "error";
   if (healthStatus === "no-port") return "idle";
-  if (p.cpu > 80) return "warning";
-  if (p.memory > 1024 * 2) return "warning";
+  if ((p.cpu ?? 0) > 80) return "warning";
+  if ((p.memory ?? 0) > 1024 * 2) return "warning";
   return "running";
 }
 
@@ -80,7 +70,7 @@ export function ProcessGroups() {
         <td className="col-port">{p.port ?? "\u2014"}</td>
         <td className="col-cpu">
           <div>{formatCpu(p.cpu)}</div>
-          <Sparkline data={p.cpuHistory ?? []} color="var(--status-yellow)" width={44} height={12} />
+          <Sparkline data={p.cpuHistory ?? []} color="var(--warning)" width={44} height={12} />
         </td>
         <td className="col-mem">
           <div>{formatMemory(p.memory)}</div>
@@ -158,7 +148,7 @@ export function ProcessGroups() {
                       <span style={{ fontSize: "var(--text-sm)", color: "var(--text-secondary)" }}>
                         No running processes
                       </span>
-                      <span style={{ fontSize: "var(--text-xs)", color: "var(--text-tertiary)" }}>
+                      <span style={{ fontSize: "var(--text-xs)", color: "var(--text-muted)" }}>
                         Start the group to see processes here
                       </span>
                     </div>

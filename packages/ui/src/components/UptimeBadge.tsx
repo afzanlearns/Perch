@@ -1,16 +1,8 @@
 import { useState, useEffect } from "react";
+import { formatUptime } from "../utils/format";
 
 interface Props {
   startedAt: number | null;
-}
-
-function formatMs(ms: number): string {
-  const s = Math.floor(ms / 1000);
-  const m = Math.floor(s / 60);
-  const h = Math.floor(m / 60);
-  if (h > 0) return `${h}h ${m % 60}m`;
-  if (m > 0) return `${m}m ${s % 60}s`;
-  return `${s}s`;
 }
 
 export function UptimeBadge({ startedAt }: Props) {
@@ -24,7 +16,9 @@ export function UptimeBadge({ startedAt }: Props) {
 
   if (!startedAt) {
     return (
-      <span className="mono-value" style={{ color: "var(--text-tertiary)" }}>—</span>
+      <span className="mono-value" style={{ fontSize: "var(--text-xs)", color: "var(--text-muted)" }}>
+        Unavailable
+      </span>
     );
   }
 
@@ -35,7 +29,7 @@ export function UptimeBadge({ startedAt }: Props) {
       style={{ fontSize: "var(--text-xs)", color: "var(--text-secondary)" }}
       title={`Started at ${new Date(startedAt).toLocaleTimeString()}`}
     >
-      ↑ {formatMs(elapsed)}
+      ↑ {formatUptime(elapsed)}
     </span>
   );
 }

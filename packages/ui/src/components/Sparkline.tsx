@@ -1,5 +1,5 @@
 interface Props {
-  data: number[];
+  data: (number | null)[];
   width?: number;
   height?: number;
   color?: string;
@@ -13,14 +13,15 @@ export function Sparkline({
   color = "var(--accent)",
   fill = false,
 }: Props) {
-  if (data.length < 2) {
+  const clean = data.filter((v): v is number => v != null);
+  if (clean.length < 2) {
     return <span style={{ width, height, display: "inline-block" }} />;
   }
 
-  const max = Math.max(...data, 0.1);
-  const pts = data
+  const max = Math.max(...clean, 0.1);
+  const pts = clean
     .map((v, i) => {
-      const x = (i / (data.length - 1)) * width;
+      const x = (i / (clean.length - 1)) * width;
       const y = height - (v / max) * (height - 2) - 1;
       return `${x.toFixed(1)},${y.toFixed(1)}`;
     })

@@ -40,22 +40,22 @@ export function PortSwapModal({ pid, currentPort, processName, onClose }: Props)
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-box" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 380 }}>
+      <div className="modal-box" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 420 }}>
         <div className="modal-header">
           <span className="modal-title">Swap Port</span>
           <button className="modal-close" onClick={onClose}>×</button>
         </div>
 
         <div className="modal-body" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <div style={{ fontSize: "var(--text-sm)", color: "var(--text-secondary)" }}>
+          <div className="helper-text">
             <span className="mono-value">{processName}</span> is running on{" "}
             <span className="mono-value" style={{ color: "var(--accent)" }}>:{currentPort}</span>.
             Choose a new port to restart it on.
           </div>
 
           <div>
-            <label style={{ fontSize: "var(--text-xs)", color: "var(--text-tertiary)", display: "block", marginBottom: 6 }}>
-              NEW PORT
+            <label className="section-title" style={{ display: "block", marginBottom: 6, textTransform: "uppercase" }}>
+              New Port
             </label>
             <input
               className="port-input"
@@ -67,21 +67,11 @@ export function PortSwapModal({ pid, currentPort, processName, onClose }: Props)
               onChange={(e) => { setNewPort(e.target.value); setError(null); }}
               onKeyDown={(e) => { if (e.key === "Enter") handleSwap(); if (e.key === "Escape") onClose(); }}
               autoFocus
-              style={{
-                width: "100%",
-                padding: "8px 10px",
-                background: "var(--surface-raised)",
-                border: "1px solid var(--border)",
-                color: "var(--text-primary)",
-                fontFamily: "var(--font-mono)",
-                fontSize: "var(--text-sm)",
-                outline: "none",
-              }}
             />
           </div>
 
           <div>
-            <div style={{ fontSize: "var(--text-xs)", color: "var(--text-tertiary)", marginBottom: 8 }}>QUICK SELECT</div>
+            <div className="section-title" style={{ marginBottom: 8, textTransform: "uppercase" }}>Quick Select</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
               {suggestions.slice(0, 10).map((p) => (
                 <button
@@ -96,7 +86,7 @@ export function PortSwapModal({ pid, currentPort, processName, onClose }: Props)
           </div>
 
           {error && (
-            <div style={{ fontSize: "var(--text-xs)", color: "var(--status-red)", padding: "6px 8px", background: "var(--status-red-bg)", border: "1px solid var(--status-red-border)" }}>
+            <div className="banner banner--error" style={{ borderRadius: "var(--radius-md)", fontSize: "var(--text-xs)" }}>
               {error}
             </div>
           )}

@@ -5,16 +5,7 @@ import { KillModal } from "./KillModal";
 import { RestartModal } from "./RestartModal";
 import type { ProcessInfo } from "../types";
 
-function formatMemory(mb: number): string {
-  if (mb === 0) return "-";
-  if (mb >= 1024) return `${(mb / 1024).toFixed(1)} GB`;
-  return `${mb.toFixed(0)} MB`;
-}
-
-function formatCpu(cpu: number): string {
-  if (cpu === 0) return "-";
-  return `${cpu.toFixed(1)}%`;
-}
+import { formatMemory, formatCpu } from "../utils/format";
 
 export function ProcessList() {
   const processes = useStore((s) => s.processes);

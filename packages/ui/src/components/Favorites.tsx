@@ -19,7 +19,7 @@ export function Favorites() {
     <div className="group-section">
       <div className="group-header" style={{ cursor: "default" }}>
         <div className="group-header-left">
-          <span style={{ fontSize: "12px", color: "var(--text-tertiary)", width: "12px", textAlign: "center" }}>&#9733;</span>
+          <span style={{ fontSize: "12px", color: "var(--text-muted)", width: "12px", textAlign: "center" }}>&#9733;</span>
           <span className="group-name">Favorites</span>
         </div>
       </div>

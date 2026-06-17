@@ -36,7 +36,7 @@ function CrashCard({ alert, onDismiss }: { alert: CrashAlert; onDismiss: () => v
           <span className="crash-card__label">crashed</span>
         </div>
         <div className="crash-card__meta">
-          <span className="mono-value" style={{ fontSize: "var(--text-xs)", color: "var(--status-red)" }}>
+          <span className="mono-value" style={{ fontSize: "var(--text-xs)", color: "var(--danger)" }}>
             {reason}
           </span>
           <span className="crash-card__countdown">{remaining}s</span>
@@ -50,7 +50,7 @@ function CrashCard({ alert, onDismiss }: { alert: CrashAlert; onDismiss: () => v
             <div
               key={i}
               className="crash-card__log-line"
-              style={{ color: line.level === "stderr" ? "var(--status-red)" : "var(--text-secondary)" }}
+              style={{ color: line.level === "stderr" ? "var(--danger)" : "var(--text-secondary)" }}
             >
               {line.message}
             </div>

@@ -21,6 +21,11 @@ import { Sparkline } from "./components/Sparkline";
 import { ConfigEditor } from "./components/ConfigEditor";
 import { useStore } from "./store";
 
+const systemStats = useStore((s) => s.systemStats);
+useEffect(() => {
+  console.log("[APP] systemStats changed:", JSON.stringify(systemStats));
+}, [systemStats]);
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 interface EmptyStateProps {
@@ -78,12 +83,12 @@ function getServiceInfo(port: number) {
 
 function HealthDot({ status }: { status: string }) {
   const colors: Record<string, string> = {
-    healthy:     "var(--status-green)",
-    unhealthy:   "var(--status-red)",
-    unreachable: "var(--status-yellow)",
-    "no-port":   "var(--text-tertiary)",
+    healthy:     "var(--success)",
+    unhealthy:   "var(--danger)",
+    unreachable: "var(--warning)",
+    "no-port":   "var(--text-muted)",
   };
-  const color = colors[status] ?? "var(--text-tertiary)";
+  const color = colors[status] ?? "var(--text-muted)";
   return (
     <span
       title={status}
@@ -245,7 +250,7 @@ export default function App() {
                     onChange={(e) => setPortFilter(e.target.value)}
                     style={{ width: 220 }}
                   />
-                  <span style={{ fontSize: "var(--text-xs)", color: "var(--text-tertiary)", marginLeft: 8 }}>
+                  <span style={{ fontSize: "var(--text-xs)", color: "var(--text-muted)", marginLeft: 8 }}>
                     {filteredPorts.length} / {portProcesses.length} ports
                   </span>
                 </div>
@@ -305,7 +310,7 @@ export default function App() {
                             {/* Port number */}
                             <td>
                               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                {hasViolation && <span title="Port reservation violated" style={{ color: "var(--status-yellow)", fontSize: 12 }}>⚠</span>}
+                                {hasViolation && <span title="Port reservation violated" style={{ color: "var(--warning)", fontSize: 12 }}>⚠</span>}
                                 <button
                                   className="port-number"
                                   onClick={(e) => { e.stopPropagation(); copyToClipboard(String(p.port), p.port!); }}
@@ -313,7 +318,7 @@ export default function App() {
                                 >
                                   <span>:{p.port}</span>
                                   <span className="copy-icon" style={{ fontSize: 10 }}>
-                                    {copiedPort === p.port ? <span style={{ color: "var(--status-green)" }}>✓</span> : "⎘"}
+                                    {copiedPort === p.port ? <span style={{ color: "var(--success)" }}>✓</span> : "⎘"}
                                   </span>
                                 </button>
                                 {svc && (
@@ -335,17 +340,15 @@ export default function App() {
 
                             {/* Health */}
                             <td>
-                              <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                              <span className={`state-badge state-badge--${h?.status === "healthy" ? "green" : h?.status === "unhealthy" ? "gray" : h?.status === "unreachable" ? "yellow" : "gray"}`}>
                                 <HealthDot status={h?.status ?? "no-port"} />
-                                <span style={{ fontSize: "var(--text-xs)", color: "var(--text-tertiary)" }}>
-                                  {h?.status ?? "—"}
-                                </span>
-                              </div>
+                                <span>{h?.status ?? "—"}</span>
+                              </span>
                             </td>
 
                             {/* CPU Sparkline */}
                             <td>
-                              <Sparkline data={p.cpuHistory ?? []} color="var(--status-yellow)" width={60} height={18} />
+                              <Sparkline data={p.cpuHistory ?? []} color="var(--warning)" width={60} height={18} />
                             </td>
 
                             {/* Mem Sparkline */}
@@ -390,17 +393,17 @@ export default function App() {
                 <div className="port-summary-bar">
                   <span>{portProcesses.length} port{portProcesses.length !== 1 ? "s" : ""} active</span>
                   <span>·</span>
-                  <span style={{ color: "var(--status-green)" }}>
+                  <span style={{ color: "var(--success)" }}>
                     {portProcesses.filter((p) => health.get(p.pid)?.status === "healthy").length} healthy
                   </span>
                   <span>·</span>
-                  <span style={{ color: "var(--status-red)" }}>
+                  <span style={{ color: "var(--danger)" }}>
                     {portProcesses.filter((p) => health.get(p.pid)?.status === "unhealthy").length} unhealthy
                   </span>
                   {portViolations.length > 0 && (
                     <>
                       <span>·</span>
-                      <span style={{ color: "var(--status-yellow)" }}>{portViolations.length} violations</span>
+                      <span style={{ color: "var(--warning)" }}>{portViolations.length} violations</span>
                     </>
                   )}
                 </div>
@@ -417,7 +420,7 @@ export default function App() {
                   <div className="main-actions">
                     <span style={{ fontSize: "var(--text-sm)", color: "var(--text-secondary)" }}>
                       {logProcess.name}
-                      <span className="mono-value" style={{ marginLeft: 8, color: "var(--text-tertiary)" }}>
+                      <span className="mono-value" style={{ marginLeft: 8, color: "var(--text-muted)" }}>
                         PID {logPid}
                       </span>
                     </span>
@@ -438,11 +441,11 @@ export default function App() {
                         style={{
                           fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)",
                           lineHeight: 1.7,
-                          color: line.level === "stderr" ? "var(--status-red)" : "var(--text-primary)",
+                          color: line.level === "stderr" ? "var(--danger)" : "var(--text-primary)",
                           padding: "1px 0",
                         }}
                       >
-                        <span style={{ color: "var(--text-tertiary)", marginRight: 10, userSelect: "none" }}>
+                        <span style={{ color: "var(--text-muted)", marginRight: 10, userSelect: "none" }}>
                           {new Date(line.timestamp).toLocaleTimeString()}
                         </span>
                         {line.message}
@@ -498,15 +501,6 @@ export default function App() {
             </>
           )}
 
-          {/* ══ SETTINGS VIEW ══ */}
-          {activeView === "settings" && (
-            <>
-              <div className="main-header"><h1 className="page-title">Settings</h1></div>
-              <div className="process-list-container">
-                <EmptyState icon={<>&#9881;</>} title="Settings moved to titlebar" description="Settings are available via the gear icon in the titlebar. Click it to access theme, connection, and configuration options." />
-              </div>
-            </>
-          )}
         </div>
 
         <DetailPanel />
@@ -543,6 +537,10 @@ export default function App() {
       {showConfigEditor && (
         <ConfigEditor onClose={() => setShowConfigEditor(false)} />
       )}
+
+      <div id="debug-systemstats" style={{ position: "fixed", bottom: 30, right: 30, background: "rgba(0,0,0,0.85)", color: "#0f0", padding: "12px 16px", borderRadius: 8, fontFamily: "monospace", fontSize: 12, zIndex: 9999, maxWidth: 400, whiteSpace: "pre-wrap", pointerEvents: "none" }}>
+        systemStats: {JSON.stringify(systemStats, null, 2)}
+      </div>
     </div>
   );
 }

@@ -6,25 +6,25 @@ import type { InspectorRequest } from "../types";
 function methodColor(method: string): string {
   switch (method.toUpperCase()) {
     case "GET":    return "var(--status-blue)";
-    case "POST":   return "var(--status-green)";
-    case "DELETE": return "var(--status-red)";
-    case "PUT":    return "var(--status-yellow)";
+    case "POST":   return "var(--success)";
+    case "DELETE": return "var(--danger)";
+    case "PUT":    return "var(--warning)";
     case "PATCH":  return "var(--accent)";
     default:       return "var(--text-secondary)";
   }
 }
 
 function statusColor(code: number | null): string {
-  if (!code) return "var(--text-tertiary)";
-  if (code < 300) return "var(--status-green)";
-  if (code < 400) return "var(--status-yellow)";
-  if (code < 500) return "var(--status-yellow)";
-  return "var(--status-red)";
+  if (!code) return "var(--text-muted)";
+  if (code < 300) return "var(--success)";
+  if (code < 400) return "var(--warning)";
+  if (code < 500) return "var(--warning)";
+  return "var(--danger)";
 }
 
 function HeaderTable({ headers }: { headers: Record<string, string> }) {
   const entries = Object.entries(headers);
-  if (entries.length === 0) return <span style={{ color: "var(--text-tertiary)", fontSize: "var(--text-xs)" }}>None</span>;
+  if (entries.length === 0) return <span style={{ color: "var(--text-muted)", fontSize: "var(--text-xs)" }}>None</span>;
   return (
     <table className="inspector-header-table">
       <tbody>
@@ -68,7 +68,7 @@ export function Inspector() {
       <div className="inspector-sidebar">
         <div className="inspector-sidebar-header">Inspect Port</div>
         {portProcesses.length === 0 ? (
-          <div style={{ padding: "12px", fontSize: "var(--text-xs)", color: "var(--text-tertiary)" }}>
+          <div style={{ padding: "12px", fontSize: "var(--text-xs)", color: "var(--text-muted)" }}>
             No port processes
           </div>
         ) : (
@@ -166,7 +166,7 @@ export function Inspector() {
                           </span>
                         </td>
                         <td>
-                          <span style={{ fontSize: "var(--text-xs)", color: "var(--text-tertiary)" }}>
+                          <span style={{ fontSize: "var(--text-xs)", color: "var(--text-muted)" }}>
                             {new Date(req.timestamp).toLocaleTimeString()}
                           </span>
                         </td>

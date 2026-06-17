@@ -90,7 +90,7 @@ export function DependencyGraph() {
   if (loading) {
     return (
       <div className="graph-empty">
-        <span style={{ color: "var(--text-tertiary)" }}>Loading dependency graph…</span>
+        <span style={{ color: "var(--text-muted)" }}>Loading dependency graph…</span>
       </div>
     );
   }
@@ -133,7 +133,7 @@ export function DependencyGraph() {
               refY="3"
               orient="auto"
             >
-              <path d="M0,0 L0,6 L8,3 z" fill="var(--text-tertiary)" />
+              <path d="M0,0 L0,6 L8,3 z" fill="var(--text-muted)" />
             </marker>
           </defs>
 
@@ -155,14 +155,14 @@ export function DependencyGraph() {
               <g key={i}>
                 <line
                   x1={x1} y1={y1} x2={x2} y2={y2}
-                  stroke="var(--border-default)"
+                  stroke="var(--border)"
                   strokeWidth={1.5}
                   markerEnd="url(#arrowhead)"
                 />
                 <text
                   x={mx} y={my - 5}
                   fontSize={9}
-                  fill="var(--text-tertiary)"
+                  fill="var(--text-muted)"
                   textAnchor="middle"
                   fontFamily="var(--font-mono)"
                 >
@@ -187,13 +187,13 @@ export function DependencyGraph() {
                 <rect
                   width={NODE_W}
                   height={NODE_H}
-                  fill={isSelected ? "var(--accent-muted)" : "var(--bg-elevated)"}
-                  stroke={isSelected ? "var(--accent)" : node.running ? "var(--status-green)" : "var(--border-default)"}
+                  fill={isSelected ? "var(--accent-muted)" : "var(--surface)"}
+                  stroke={isSelected ? "var(--accent)" : node.running ? "var(--success)" : "var(--border)"}
                   strokeWidth={isSelected ? 2 : 1}
                 />
                 {/* Running indicator strip */}
                 {node.running && (
-                  <rect width={3} height={NODE_H} fill="var(--status-green)" />
+                  <rect width={3} height={NODE_H} fill="var(--success)" />
                 )}
                 <text
                   x={NODE_W / 2}
@@ -243,7 +243,7 @@ export function DependencyGraph() {
               )}
               <div className="graph-detail-row">
                 <span className="graph-detail-label">Status</span>
-                <span style={{ color: selected.running ? "var(--status-green)" : "var(--text-tertiary)" }}>
+                <span style={{ color: selected.running ? "var(--success)" : "var(--text-muted)" }}>
                   {selected.running ? "● Running" : "○ Stopped"}
                 </span>
               </div>

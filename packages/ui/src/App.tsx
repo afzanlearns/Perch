@@ -21,11 +21,6 @@ import { Sparkline } from "./components/Sparkline";
 import { ConfigEditor } from "./components/ConfigEditor";
 import { useStore } from "./store";
 
-const systemStats = useStore((s) => s.systemStats);
-useEffect(() => {
-  console.log("[APP] systemStats changed:", JSON.stringify(systemStats));
-}, [systemStats]);
-
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 interface EmptyStateProps {
@@ -538,9 +533,6 @@ export default function App() {
         <ConfigEditor onClose={() => setShowConfigEditor(false)} />
       )}
 
-      <div id="debug-systemstats" style={{ position: "fixed", bottom: 30, right: 30, background: "rgba(0,0,0,0.85)", color: "#0f0", padding: "12px 16px", borderRadius: 8, fontFamily: "monospace", fontSize: 12, zIndex: 9999, maxWidth: 400, whiteSpace: "pre-wrap", pointerEvents: "none" }}>
-        systemStats: {JSON.stringify(systemStats, null, 2)}
-      </div>
     </div>
   );
 }

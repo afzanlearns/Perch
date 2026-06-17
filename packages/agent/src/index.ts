@@ -1,6 +1,7 @@
 import { createServer } from "http";
 import { createApp } from "./app.js";
 import { getProcesses, getPortViolations } from "./processes.js";
+import { getSystemStats } from "./system.js";
 import { getEnvVars } from "./env.js";
 import { checkHealth } from "./health.js";
 import { getLogs, subscribe as subscribeLogs } from "./logs.js";
@@ -78,7 +79,7 @@ function main() {
 
   const ws = createWebSocketServer(
     server,
-    () => processes, () => env, () => healthData,
+    () => processes, () => getSystemStats(), () => env, () => healthData,
     (pid) => killProcess(pid),
     (pid, command, cwd) => restartProcess(pid, command, cwd),
     (pid, signal) => sendSignal(pid, signal),

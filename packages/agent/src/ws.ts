@@ -5,6 +5,7 @@ import type { EnvVars } from "./env.js";
 import type { HealthStatus } from "./health.js";
 import type { LogLine } from "./logs.js";
 import type { CrashAlert } from "./groups.js";
+import type { SystemStats } from "./system.js";
 import { swapPort } from "./portSwap.js";
 import { startInspector, stopInspector, getActiveInspectors } from "./inspector.js";
 
@@ -21,6 +22,7 @@ function wsSend(ws: WebSocket, data: object) {
 export function createWebSocketServer(
   server: Server,
   getProcessesData: () => ProcessInfo[],
+  getSystemStatsData: () => SystemStats,
   getEnvData: () => EnvVars,
   getHealthData: () => Map<number, { pid: number; status: HealthStatus; checkedAt: number }>,
   killFn: (pid: number) => Promise<{ success: boolean; pid: number; action: string; message: string }>,
@@ -40,9 +42,12 @@ export function createWebSocketServer(
     const state: ClientState = { subscribedPid: null };
     clients.set(ws, state);
 
+    const sysData = getSystemStatsData();
+    console.log("[WS] initial send — system object:", JSON.stringify(sysData));
     wsSend(ws, {
       type: "initial",
       processes: getProcessesData(),
+      system: sysData,
       env: getEnvData(),
       health: Array.from(getHealthData().values()),
       groups: getGroupDataFn().groups,
@@ -160,7 +165,9 @@ export function createWebSocketServer(
   }
 
   function broadcastProcessUpdate(processes: ProcessInfo[]) {
-    broadcast({ type: "processes:update", processes });
+    const sysData = getSystemStatsData();
+    console.log("[WS] broadcastProcessUpdate — system object:", JSON.stringify(sysData));
+    broadcast({ type: "processes:update", processes, system: sysData });
   }
 
   return {

@@ -1,4 +1,5 @@
 import psList from "ps-list";
+import pidusage from "pidusage";
 import { safeExecFileSync, safeExecSync } from "./utils/spawn.js";
 import { platform } from "os";
 import { getStartedAt } from "./groups.js";
@@ -7,19 +8,19 @@ export interface ProcessInfo {
   pid: number;
   ppid?: number;
   name: string;
-  memory: number;
-  cpu: number;
+  memory: number | null;
+  cpu: number | null;
   port: number | null;
   command: string;
   groupId?: string;
   serviceId?: string;
-  cpuHistory: number[];
-  memHistory: number[];
+  cpuHistory: (number | null)[];
+  memHistory: (number | null)[];
   uptimeMs: number | null;
   startedAt: number | null;
 }
 
-interface MetricPoint { ts: number; cpu: number; mem: number; }
+interface MetricPoint { ts: number; cpu: number | null; mem: number | null; }
 const metricsHistory = new Map<number, MetricPoint[]>();
 const HISTORY_SIZE = 20;
 
@@ -117,27 +118,61 @@ export async function getProcesses(): Promise<ProcessInfo[]> {
     }
   }
 
+  // ── Get CPU, memory, and elapsed time via pidusage ──────────────────
+  const pids = allProcesses.map((p) => p.pid);
+  let pidStats: Record<number, { cpu: number; memory: number; elapsed: number }> = {};
+  try {
+    const raw = await pidusage(pids, { maxage: 30000 });
+    for (const [pid, stat] of Object.entries(raw)) {
+      pidStats[Number(pid)] = {
+        cpu: stat.cpu,
+        memory: stat.memory,
+        elapsed: stat.elapsed,
+      };
+    }
+  } catch (err) {
+    console.error("pidusage collection error:", err);
+  }
+
   const results: ProcessInfo[] = [];
   const seen = new Set<number>();
 
   for (const proc of allProcesses) {
     if (seen.has(proc.pid)) continue;
     seen.add(proc.pid);
-    const annotation = groupAnnotations.get(proc.pid);
+
+    const usageMetrics = pidStats[proc.pid];
+
+    // cpu: pidusage returns a percentage (0-100), or undefined on failure
+    const cpu = usageMetrics?.cpu ?? null;
+
+    // memory: pidusage returns bytes; convert to MB
+    const memoryBytes = usageMetrics?.memory ?? null;
+    const memoryMB = memoryBytes !== null ? Math.round(memoryBytes / (1024 * 1024)) : null;
+
+    // elapsed: pidusage returns ms since process start; derive startedAt
+    const elapsedMs = usageMetrics?.elapsed ?? null;
+    const derivedStartedAt = elapsedMs !== null && elapsedMs > 0
+      ? Date.now() - elapsedMs
+      : null;
+
+    // Prefer Perch-managed startedAt, fall back to pidusage elapsed
+    const managedStartedAt = getStartedAt(proc.pid);
+    const startedAt = managedStartedAt ?? derivedStartedAt;
 
     // Update metrics history
     const history = metricsHistory.get(proc.pid) ?? [];
-    history.push({ ts: Date.now(), cpu: proc.cpu ?? 0, mem: proc.memory ?? 0 });
+    history.push({ ts: Date.now(), cpu, mem: memoryMB });
     if (history.length > HISTORY_SIZE) history.shift();
     metricsHistory.set(proc.pid, history);
 
-    const startedAt = getStartedAt(proc.pid);
+    const annotation = groupAnnotations.get(proc.pid);
     results.push({
       pid: proc.pid,
       ppid: proc.ppid,
       name: proc.name || proc.cmd || "unknown",
-      memory: proc.memory ?? 0,
-      cpu: proc.cpu ?? 0,
+      memory: memoryMB,
+      cpu,
       port: pidToPort.get(proc.pid) ?? null,
       command: "",
       cpuHistory: history.map((h) => h.cpu),

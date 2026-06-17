@@ -6,19 +6,9 @@ import { KeyboardShortcuts } from "./Keyboard";
 import { UptimeBadge } from "./UptimeBadge";
 import { Sparkline } from "./Sparkline";
 import { sendWsMessage } from "../hooks/useWebSocket";
+import { formatMemory, formatCpu, formatSystemCpu, formatSystemMemory } from "../utils/format";
 
 type Tab = "overview" | "logs" | "env";
-
-function formatMemory(mb: number): string {
-  if (mb === 0) return "-";
-  if (mb >= 1024) return `${(mb / 1024).toFixed(1)} GB`;
-  return `${mb.toFixed(0)} MB`;
-}
-
-function formatCpu(cpu: number): string {
-  if (cpu === 0) return "-";
-  return `${cpu.toFixed(1)}%`;
-}
 
 export function DetailPanel() {
   const [tab, setTab]    = useState<Tab>("overview");
@@ -26,32 +16,48 @@ export function DetailPanel() {
   const processes        = useStore((s) => s.processes);
   const logsBuffer       = useStore((s) => s.logsBuffer);
   const selectPid        = useStore((s) => s.selectPid);
+  const systemStats      = useStore((s) => s.systemStats);
+
+  console.log("[DETAIL-PANEL] systemStats from store:", JSON.stringify(systemStats));
 
   const hasProcesses = processes.length > 0;
 
   if (!selectedPid && !hasProcesses) {
     return (
-      <div className="detail-panel empty">
-        <div className="detail-panel-empty-content">
-          <h3>Select a process</h3>
-          <p>Click a process in the list or use arrow keys to navigate.</p>
-          <KeyboardShortcuts />
+      <div className="detail-panel">
+        <div className="detail-panel-tabs">
+          <button className="detail-panel-tab active">Overview</button>
+          <button className="detail-panel-tab" disabled>Logs</button>
+          <button className="detail-panel-tab" disabled>Environment</button>
+        </div>
+        <div className="detail-panel-body" style={{ display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "var(--space-8)" }}>
+          <div style={{ color: "var(--text-muted)" }}>
+            <div style={{ fontSize: 28, marginBottom: "var(--space-3)", opacity: 0.5 }}>○</div>
+            <h3 style={{ fontSize: "var(--text-md)", fontWeight: 500, color: "var(--text-secondary)", marginBottom: "var(--space-2)" }}>No process selected</h3>
+            <p style={{ fontSize: "var(--text-sm)", marginBottom: "var(--space-4)", lineHeight: 1.6 }}>
+              Click a process in the list or use arrow keys to navigate.
+            </p>
+            <KeyboardShortcuts />
+          </div>
         </div>
       </div>
     );
   }
 
   if (!selectedPid && hasProcesses) {
-    const uniquePorts = new Set(processes.map((p) => p.port).filter(Boolean)).size;
-    const totalCpu    = processes.reduce((sum, p) => sum + p.cpu, 0);
-    const totalMem    = processes.reduce((sum, p) => sum + p.memory, 0);
-    const allLogs     = Object.entries(logsBuffer)
+    const uniquePorts  = new Set(processes.map((p) => p.port).filter(Boolean)).size;
+    const allLogs      = Object.entries(logsBuffer)
       .flatMap(([pid, lines]) => lines.slice(-1).map((l) => ({ ...l, pid: parseInt(pid) })))
       .slice(-5);
 
     return (
       <div className="detail-panel" style={{ overflow: "hidden" }}>
-        <div className="detail-panel-body" style={{ padding: "12px" }}>
+        <div className="detail-panel-tabs">
+          <button className="detail-panel-tab active">Overview</button>
+          <button className="detail-panel-tab" disabled>Logs</button>
+          <button className="detail-panel-tab" disabled>Environment</button>
+        </div>
+        <div className="detail-panel-body" style={{ padding: "var(--space-4)" }}>
           <div className="metric-panel" style={{ width: "100%", padding: 0, borderLeft: "none", background: "transparent" }}>
             <div className="metric-card">
               <span className="metric-card__label">Processes</span>
@@ -63,22 +69,24 @@ export function DetailPanel() {
             </div>
             <div className="metric-card">
               <span className="metric-card__label">CPU</span>
-              <span className="metric-card__value">{formatCpu(totalCpu)}</span>
+              <span className="metric-card__value">{systemStats ? formatSystemCpu(systemStats.cpuUsage) : "\u2014"}</span>
+              <span className="metric-card__sublabel">system-wide</span>
             </div>
             <div className="metric-card">
               <span className="metric-card__label">Memory</span>
-              <span className="metric-card__value">{formatMemory(totalMem)}</span>
+              <span className="metric-card__value">{systemStats ? formatSystemMemory(systemStats.usedMemMb, systemStats.totalMemMb) : "\u2014"}</span>
+              <span className="metric-card__sublabel">system RAM</span>
             </div>
           </div>
           {allLogs.length > 0 && (
-            <div className="summary-recent-logs" style={{ marginTop: "12px" }}>
+            <div className="summary-recent-logs" style={{ marginTop: "var(--space-4)" }}>
               <h3>Recent Log Events</h3>
               {allLogs.map((l, i) => {
                 const proc = processes.find((p) => p.pid === l.pid);
                 return (
-                  <div key={i} className="summary-log-item" style={{ color: l.level === "stderr" ? "var(--status-red)" : "var(--text-tertiary)" }}>
+                  <div key={i} className="summary-log-item">
                     <span className="summary-log-source">{proc?.name ?? `PID ${l.pid}`}</span>
-                    <span>{l.message}</span>
+                    <span style={{ color: l.level === "stderr" ? "var(--danger)" : "var(--text-muted)" }}>{l.message}</span>
                   </div>
                 );
               })}
@@ -124,7 +132,7 @@ export function DetailPanel() {
                   <div className="detail-meta-value">
                     {formatCpu(proc.cpu)}
                     <div style={{ marginTop: 2 }}>
-                      <Sparkline data={proc.cpuHistory ?? []} color="var(--status-yellow)" width={80} height={16} />
+                      <Sparkline data={proc.cpuHistory ?? []} color="var(--warning)" width={80} height={16} />
                     </div>
                   </div>
                 </div>

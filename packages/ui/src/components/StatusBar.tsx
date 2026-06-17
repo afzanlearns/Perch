@@ -1,21 +1,12 @@
 import { useStore } from "../store";
-
-function formatMemory(mb: number): string {
-  if (mb >= 1024) return `${(mb / 1024).toFixed(1)} GB`;
-  return `${mb.toFixed(0)} MB`;
-}
-
-function formatCpu(cpu: number): string {
-  return `${cpu.toFixed(1)}%`;
-}
+import { formatSystemCpu, formatSystemMemory } from "../utils/format";
 
 export function StatusBar() {
-  const connected = useStore((s) => s.connected);
-  const processes = useStore((s) => s.processes);
+  const connected   = useStore((s) => s.connected);
+  const processes   = useStore((s) => s.processes);
+  const systemStats = useStore((s) => s.systemStats);
   const processCount = processes.length;
-  const uniquePorts = new Set(processes.map((p) => p.port).filter(Boolean)).size;
-  const totalCpu = processes.reduce((sum, p) => sum + p.cpu, 0);
-  const totalMem = processes.reduce((sum, p) => sum + p.memory, 0);
+  const uniquePorts  = new Set(processes.map((p) => p.port).filter(Boolean)).size;
 
   if (!connected) {
     return (
@@ -42,16 +33,12 @@ export function StatusBar() {
           <span className="statusbar-item">{uniquePorts} port{uniquePorts !== 1 ? "s" : ""}</span>
         </>
       )}
-      {totalCpu > 0 && (
+      {systemStats && (
         <>
           <span className="statusbar-sep">&middot;</span>
-          <span className="statusbar-item">CPU {formatCpu(totalCpu)}</span>
-        </>
-      )}
-      {totalMem > 0 && (
-        <>
+          <span className="statusbar-item">CPU {formatSystemCpu(systemStats.cpuUsage)}</span>
           <span className="statusbar-sep">&middot;</span>
-          <span className="statusbar-item">Mem {formatMemory(totalMem)}</span>
+          <span className="statusbar-item">{formatSystemMemory(systemStats.usedMemMb, systemStats.totalMemMb)}</span>
         </>
       )}
       <span className="statusbar-right">v0.1.0</span>

@@ -112,6 +112,12 @@ async function main() {
     case "status":
       await showStatus();
       break;
+    case "ports": {
+      const { listPorts, printPortTable } = await import("./ports-command.js");
+      const rows = await listPorts();
+      printPortTable(rows);
+      break;
+    }
     default:
       console.log("");
       console.log("Perch \u2014 Local developer dashboard");
@@ -120,6 +126,7 @@ async function main() {
       console.log("  perch start      Start the Perch daemon");
       console.log("  perch stop       Stop the Perch daemon");
       console.log("  perch status     Show daemon status");
+      console.log("  perch ports      List active ports and owning processes");
       console.log("");
       console.log("Then open http://localhost:7777");
       console.log("");

@@ -69,9 +69,13 @@ export function useWebSocket() {
                 break;
 
               case "processes:update":
-                console.log("[WS-RENDERER] processes:update — msg.system:", JSON.stringify(msg.system));
+                console.log("[WS-RENDERER] processes:update — system present:", "system" in msg, "system value:", JSON.stringify(msg.system));
+                if ("system" in msg && msg.system !== undefined) {
+                  setSystemStats(msg.system);
+                } else {
+                  console.log("[WS-RENDERER] processes:update — system MISSING from payload, preserving existing systemStats");
+                }
                 setProcesses(msg.processes ?? []);
-                setSystemStats(msg.system ?? null);
                 break;
 
               case "health:update":

@@ -35,15 +35,20 @@ export async function killProcess(pid: number): Promise<ControlResult> {
   try {
     const exists = await pidExists(pid);
     if (!exists) {
-      return { success: false, pid, action: "kill", message: "Process does not exist" };
+      return { success: true, pid, action: "kill", message: "Process does not exist" };
     }
 
     const isWin = platform() === "win32";
 
-    if (isWin) {
-      safeExecFileSync("taskkill", ["/pid", String(pid), "/t"], { timeout: 5000, stdio: "pipe" });
-    } else {
-      safeExecSync(`kill ${pid} 2>/dev/null`, { timeout: 3000 });
+    // Phase 1 — graceful kill
+    try {
+      if (isWin) {
+        safeExecFileSync("taskkill", ["/pid", String(pid), "/t"], { timeout: 5000, stdio: "pipe" });
+      } else {
+        safeExecSync(`kill ${pid} 2>/dev/null`, { timeout: 3000 });
+      }
+    } catch {
+      // Graceful kill failed, will try force kill
     }
 
     const deadline = Date.now() + 2000;
@@ -55,10 +60,15 @@ export async function killProcess(pid: number): Promise<ControlResult> {
       await sleep(100);
     }
 
-    if (isWin) {
-      safeExecFileSync("taskkill", ["/pid", String(pid), "/f", "/t"], { timeout: 5000, stdio: "pipe" });
-    } else {
-      safeExecSync(`kill -9 ${pid} 2>/dev/null`, { timeout: 3000 });
+    // Phase 2 — force kill
+    try {
+      if (isWin) {
+        safeExecFileSync("taskkill", ["/pid", String(pid), "/f", "/t"], { timeout: 5000, stdio: "pipe" });
+      } else {
+        safeExecSync(`kill -9 ${pid} 2>/dev/null`, { timeout: 3000 });
+      }
+    } catch {
+      // Force kill also failed
     }
 
     const forceDeadline = Date.now() + 2000;

@@ -109,12 +109,14 @@ export async function getProcesses(): Promise<ProcessInfo[]> {
   const allProcesses = await psList();
   const portMap = getPortMap();
 
-  const pidToPort: Map<number, number> = new Map();
+  const pidToPorts: Map<number, number[]> = new Map();
   for (const entry of portMap) {
     if (COMMON_PORTS.includes(entry.port) || (entry.port >= 3000 && entry.port <= 9999)) {
-      if (!pidToPort.has(entry.pid)) {
-        pidToPort.set(entry.pid, entry.port);
+      const ports = pidToPorts.get(entry.pid) ?? [];
+      if (!ports.includes(entry.port)) {
+        ports.push(entry.port);
       }
+      pidToPorts.set(entry.pid, ports);
     }
   }
 
@@ -167,20 +169,42 @@ export async function getProcesses(): Promise<ProcessInfo[]> {
     metricsHistory.set(proc.pid, history);
 
     const annotation = groupAnnotations.get(proc.pid);
-    results.push({
-      pid: proc.pid,
-      ppid: proc.ppid,
-      name: proc.name || proc.cmd || "unknown",
-      memory: memoryMB,
-      cpu,
-      port: pidToPort.get(proc.pid) ?? null,
-      command: "",
-      cpuHistory: history.map((h) => h.cpu),
-      memHistory: history.map((h) => h.mem),
-      uptimeMs: startedAt !== null ? Date.now() - startedAt : null,
-      startedAt,
-      ...(annotation ? { groupId: annotation.groupId, serviceId: annotation.serviceId } : {}),
-    });
+    const ports = pidToPorts.get(proc.pid) ?? [];
+
+    // If the process has multiple ports, create one entry per port
+    if (ports.length > 1) {
+      for (const port of ports) {
+        results.push({
+          pid: proc.pid,
+          ppid: proc.ppid,
+          name: proc.name || proc.cmd || "unknown",
+          memory: memoryMB,
+          cpu,
+          port,
+          command: proc.cmd || proc.name || "",
+          cpuHistory: history.map((h) => h.cpu),
+          memHistory: history.map((h) => h.mem),
+          uptimeMs: startedAt !== null ? Date.now() - startedAt : null,
+          startedAt,
+          ...(annotation ? { groupId: annotation.groupId, serviceId: annotation.serviceId } : {}),
+        });
+      }
+    } else {
+      results.push({
+        pid: proc.pid,
+        ppid: proc.ppid,
+        name: proc.name || proc.cmd || "unknown",
+        memory: memoryMB,
+        cpu,
+        port: ports.length === 1 ? ports[0] : null,
+        command: proc.cmd || proc.name || "",
+        cpuHistory: history.map((h) => h.cpu),
+        memHistory: history.map((h) => h.mem),
+        uptimeMs: startedAt !== null ? Date.now() - startedAt : null,
+        startedAt,
+        ...(annotation ? { groupId: annotation.groupId, serviceId: annotation.serviceId } : {}),
+      });
+    }
   }
 
   results.sort((a, b) => {

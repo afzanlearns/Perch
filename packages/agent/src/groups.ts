@@ -183,10 +183,16 @@ export async function killService(pid: number): Promise<boolean> {
     }
 
     const isWin = platform() === "win32";
-    if (isWin) {
-      safeExecFileSync("taskkill", ["/pid", String(pid), "/t"], { timeout: 5000, stdio: "pipe" });
-    } else {
-      safeExecSync(`kill ${pid} 2>/dev/null`, { timeout: 3000 });
+
+    // Phase 1 — graceful kill
+    try {
+      if (isWin) {
+        safeExecFileSync("taskkill", ["/pid", String(pid), "/t"], { timeout: 5000, stdio: "pipe" });
+      } else {
+        safeExecSync(`kill ${pid} 2>/dev/null`, { timeout: 3000 });
+      }
+    } catch {
+      // Graceful kill failed, will try force kill
     }
 
     const deadline = Date.now() + 2000;
@@ -199,10 +205,15 @@ export async function killService(pid: number): Promise<boolean> {
       await sleep(100);
     }
 
-    if (isWin) {
-      safeExecFileSync("taskkill", ["/pid", String(pid), "/f", "/t"], { timeout: 5000, stdio: "pipe" });
-    } else {
-      safeExecSync(`kill -9 ${pid} 2>/dev/null`, { timeout: 3000 });
+    // Phase 2 — force kill
+    try {
+      if (isWin) {
+        safeExecFileSync("taskkill", ["/pid", String(pid), "/f", "/t"], { timeout: 5000, stdio: "pipe" });
+      } else {
+        safeExecSync(`kill -9 ${pid} 2>/dev/null`, { timeout: 3000 });
+      }
+    } catch {
+      // Force kill also failed
     }
 
     const forceDeadline = Date.now() + 2000;

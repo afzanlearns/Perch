@@ -15,6 +15,7 @@ import { killProcess } from "./control.js";
 import { getServiceInstance, startService } from "./groups.js";
 import { getConfig } from "./config.js";
 import { platform } from "os";
+import net from "net";
 import { safeSpawn } from "./utils/spawn.js";
 
 export interface PortSwapResult {
@@ -145,7 +146,6 @@ export async function swapPort(
 /** Quick non-blocking check whether a TCP port is already bound. */
 function isPortInUse(port: number): Promise<boolean> {
   return new Promise((resolve) => {
-    const net = require("net");
     const tester = net.createServer();
     tester.once("error", () => resolve(true));
     tester.once("listening", () => {

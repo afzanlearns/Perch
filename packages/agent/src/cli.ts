@@ -74,8 +74,13 @@ export async function cliKill(portOrPid: string) {
     } else {
       console.error(chalk.red(`\u2717 ${result.message || 'Failed to kill process'}`));
     }
-  } catch {
-    console.error(chalk.red('\u2717 Failed to kill process. Is daemon running?'));
+  } catch (err: any) {
+    // Daemon killing itself kills the connection before response arrives
+    if (err?.cause?.code === 'ECONNREFUSED' || err?.cause?.code === 'ECONNRESET') {
+      console.log(chalk.green('\u2713 Daemon stopped. Port 7777 is now free.'));
+    } else {
+      console.error(chalk.red('\u2717 Failed to kill process. Is daemon running?'));
+    }
   }
 }
 

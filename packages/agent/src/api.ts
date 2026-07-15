@@ -82,6 +82,14 @@ export function createApiRouter(
   router.post("/processes/:pid/kill", async (req, res) => {
     const pid = parseInt(req.params.pid, 10);
     if (isNaN(pid)) { res.status(400).json({ error: "Invalid PID" }); return; }
+
+    // If killing the daemon itself, respond first then exit
+    if (pid === process.pid) {
+      res.json({ success: true, message: `Perch daemon (PID ${pid}) stopped`, pid, action: "kill", killedAt: new Date().toISOString() });
+      setTimeout(() => process.exit(0), 100);
+      return;
+    }
+
     res.json(await killFn(pid));
   });
 
@@ -146,6 +154,13 @@ export function createApiRouter(
           res.status(404).json({ success: false, message: `No process found for port or PID ${portOrPid}` });
           return;
         }
+      }
+
+      // If killing the daemon itself, respond first then exit
+      if (pid === process.pid) {
+        res.json({ success: true, message: `Perch daemon (PID ${pid}) stopped`, pid, action: "kill", killedAt: new Date().toISOString() });
+        setTimeout(() => process.exit(0), 100);
+        return;
       }
 
       const result = await killFn(pid);

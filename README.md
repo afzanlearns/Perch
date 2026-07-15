@@ -54,6 +54,11 @@ Perch is a lightweight desktop client and background daemon that continuously mo
 ### 8. Startup & Uptime Tracking
 * Real-time uptime badges showing exactly how long each process has been alive, complete with milliseconds-level granularity.
 
+### 9. Forceful Process Kill & Restart
+* Kill stubborn processes that ignore `SIGTERM` on Windows using `taskkill /F /T` with child process tree termination.
+* Restart processes with the original command, capturing logs from the respawned instance.
+* Verification polling ensures the process is actually dead before reporting success.
+
 ---
 
 ## Installation & Setup
@@ -89,17 +94,65 @@ Open **http://localhost:3000** in your browser.
 
 ## CLI Command Usage
 
-Use the globally linked `perch` CLI command to easily control the background daemon:
+Use the globally linked `perch` CLI command to easily control the background daemon. Running `perch` with no arguments shows the daemon status inline (green `● Running` or red `● Stopped`) plus the full command reference:
 
 ```bash
-# Start the background daemon
+perch
+# Perch — Local developer dashboard
+#   ● Running on http://localhost:7777             (green when up)
+#
+# Usage:
+#   perch start            Start the Perch daemon
+#   perch stop             Stop the Perch daemon
+#   perch status           Show daemon status
+#   ...
+```
+
+### Daemon Lifecycle
+
+```bash
+# Start the background daemon (no-op if already running)
 perch start
 
 # Show current daemon status (running state, uptime, active process count)
 perch status
 
-# Stop the daemon completely
+# Stop the daemon completely (checks if running first)
 perch stop
+```
+
+### Process Management
+
+```bash
+# List all listening ports with process name, PID, and memory
+perch ports
+
+# Show all connections including non-listening states
+perch ports --all
+
+# Kill a process by port number or PID
+perch kill 3000          # by port
+perch kill 7472          # by PID
+
+# Restart a process using its original command
+perch restart 3000       # by port
+perch restart 7472       # by PID
+
+# Check health of all services
+perch health
+```
+
+### Diagnostics
+
+```bash
+# View the last 50 log lines for a process
+perch logs 3000
+
+# View a custom number of log lines
+perch logs 3000 --lines 100
+
+# Show the current daemon configuration
+perch config
 ```
 
 ---
@@ -191,7 +244,8 @@ Customise your dashboard workspace by placing a `perch.config.json` file in your
 * **Web UI:** React + Zustand (Themed with CSS Custom Properties)
 * **Daemon Runtime:** Node.js + Express + WebSocket
 * **Proxy Core:** `http-proxy`
-* **Process Intelligence:** `ps-list`, `pidusage`, `node-netstat`, `chokidar`
+* **Process Intelligence:** `ps-list`, `pidusage`, `ps-tree`, `node-netstat`, `chokidar`
+* **CLI Aesthetics:** `chalk`, `cli-table3`
 
 ---
 

@@ -73,7 +73,25 @@ async function startDaemon() {
   process.exit(0);
 }
 
-function stopDaemon() {
+const GREEN = '\x1b[32m';
+const RED = '\x1b[91m';
+const RESET = '\x1b[0m';
+
+async function isDaemonRunning() {
+  try {
+    const res = await fetch("http://localhost:7777/api/status", { signal: AbortSignal.timeout(2000) });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+async function stopDaemon() {
+  const running = await isDaemonRunning();
+  if (!running) {
+    console.log(RED + "Perch daemon is not running." + RESET);
+    return;
+  }
   console.log("Stopping Perch daemon...");
   try {
     if (isWindows) {
@@ -81,22 +99,22 @@ function stopDaemon() {
     } else {
       execSync("pkill -f 'perch.*dist/index' 2>/dev/null || pkill -f 'tsx.*index.ts' 2>/dev/null", { timeout: 3000, windowsHide: true });
     }
-    console.log("Perch daemon stopped.");
+    console.log(GREEN + "Perch daemon stopped." + RESET);
   } catch {
     console.log("Could not find Perch daemon to stop.");
   }
 }
 
 async function showStatus() {
-  console.log("Perch daemon status:");
   try {
-    const res = await fetch("http://localhost:7777/api/status");
+    const res = await fetch("http://localhost:7777/api/status", { signal: AbortSignal.timeout(2000) });
     const data = await res.json();
-    console.log("  Status: " + data.status);
-    console.log("  Uptime: " + data.uptimeFormatted);
+    console.log(GREEN + "Perch daemon is running" + RESET);
+    console.log("  Status:  " + data.status);
+    console.log("  Uptime:  " + data.uptimeFormatted);
     console.log("  Processes: " + data.processCount);
   } catch {
-    console.log("  Daemon is not running.");
+    console.log(RED + "Perch daemon is not running." + RESET);
   }
 }
 
@@ -135,7 +153,7 @@ async function main() {
       await startDaemon();
       return;
     case "stop":
-      stopDaemon();
+      await stopDaemon();
       return;
     case "status":
       await showStatus();

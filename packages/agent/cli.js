@@ -100,35 +100,113 @@ async function showStatus() {
   }
 }
 
+function toFileUrl(path) {
+  if (process.platform === "win32") {
+    // Convert Windows path like C:\foo\bar to file:///C:/foo/bar
+    return "file:///" + path.replace(/\\/g, "/");
+  }
+  return path;
+}
+
+async function loadCliModule() {
+  // Try dist first (built), then src (via tsx/node with ts extension)
+  const distPath = join(__dirname, "dist", "cli.js");
+  const srcPath = join(__dirname, "src", "cli.ts");
+
+  if (existsSync(distPath)) {
+    return await import(toFileUrl(distPath));
+  }
+  if (existsSync(srcPath)) {
+    try {
+      return await import(toFileUrl(srcPath));
+    } catch {
+      // Could not import TS directly, try falling back
+    }
+  }
+  return null;
+}
+
 async function main() {
   const cmd = process.argv[2];
+
+  // Commands that don't need the daemon
   switch (cmd) {
     case "start":
       await startDaemon();
-      break;
+      return;
     case "stop":
       stopDaemon();
-      break;
+      return;
     case "status":
       await showStatus();
-      break;
+      return;
+  }
+
+  // Commands that need CLI module (and daemon API)
+  const cli = await loadCliModule();
+  if (!cli) {
+    console.error("CLI module not built. Run 'npm run build' first.");
+    process.exit(1);
+  }
+
+  switch (cmd) {
     case "ports": {
-      const showAll = process.argv.includes("--all");
       const { listPorts, printPortTable } = await import("./ports-command.js");
+      const showAll = process.argv.includes("--all");
       const result = await listPorts({ all: showAll });
       printPortTable(result, { all: showAll });
       break;
     }
+    case "kill": {
+      const portOrPid = process.argv[3];
+      if (!portOrPid) {
+        console.error("Usage: perch kill <port or pid>");
+        process.exit(1);
+      }
+      await cli.cliKill(portOrPid);
+      break;
+    }
+    case "restart": {
+      const portOrPid = process.argv[3];
+      if (!portOrPid) {
+        console.error("Usage: perch restart <port or pid>");
+        process.exit(1);
+      }
+      await cli.cliRestart(portOrPid);
+      break;
+    }
+    case "health":
+      await cli.cliHealth();
+      break;
+    case "logs": {
+      const portOrPid = process.argv[3];
+      if (!portOrPid) {
+        console.error("Usage: perch logs <port or pid> [--lines N]");
+        process.exit(1);
+      }
+      const linesIdx = process.argv.indexOf("--lines");
+      const lines = linesIdx !== -1 ? parseInt(process.argv[linesIdx + 1], 10) || 50 : 50;
+      await cli.cliLogs(portOrPid, lines);
+      break;
+    }
+    case "config":
+      await cli.cliConfig();
+      break;
     default:
       console.log("");
       console.log("Perch \u2014 Local developer dashboard");
       console.log("");
       console.log("Usage:");
-      console.log("  perch start      Start the Perch daemon");
-      console.log("  perch stop       Stop the Perch daemon");
-      console.log("  perch status     Show daemon status");
-      console.log("  perch ports      List listening ports and owning processes");
-      console.log("  perch ports --all   List all connections (including transient states)");
+      console.log("  perch start            Start the Perch daemon");
+      console.log("  perch stop             Stop the Perch daemon");
+      console.log("  perch status           Show daemon status");
+      console.log("  perch ports            List listening ports");
+      console.log("  perch ports --all      List all connections");
+      console.log("  perch kill <p|pid>     Kill a process by port or PID");
+      console.log("  perch restart <p|pid>  Restart a process by port or PID");
+      console.log("  perch health           Check service health");
+      console.log("  perch logs <p|pid>     Show logs for a process");
+      console.log("  perch config           Show daemon config");
       console.log("");
       console.log("Then open http://localhost:7777");
       console.log("");

@@ -213,6 +213,19 @@ async function main() {
     default:
       console.log("");
       console.log("Perch \u2014 Local developer dashboard");
+
+      // Show daemon status inline
+      try {
+        const res = await fetch("http://localhost:7777/api/status", { signal: AbortSignal.timeout(1500) });
+        if (res.ok) {
+          console.log(GREEN + "  \u25CF Running on http://localhost:7777" + RESET);
+        } else {
+          console.log(RED + "  \u25CF Stopped" + RESET);
+        }
+      } catch {
+        console.log(RED + "  \u25CF Stopped" + RESET);
+      }
+
       console.log("");
       console.log("Usage:");
       console.log("  perch start            Start the Perch daemon");
@@ -225,8 +238,6 @@ async function main() {
       console.log("  perch health           Check service health");
       console.log("  perch logs <p|pid>     Show logs for a process");
       console.log("  perch config           Show daemon config");
-      console.log("");
-      console.log("Then open http://localhost:7777");
       console.log("");
   }
 }

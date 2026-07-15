@@ -51,11 +51,32 @@ export function createApiRouter(
     res.json({ health: Array.from(getHealthData().values()) });
   });
 
-  router.get("/logs/:pid", (req, res) => {
-    const pid = parseInt(req.params.pid, 10);
-    if (isNaN(pid)) { res.status(400).json({ error: "Invalid PID" }); return; }
-    const lines = parseInt(req.query.lines as string, 10) || 100;
-    res.json({ pid, logs: getLogsFn(pid, lines) });
+  router.get("/logs/:identifier", (req, res) => {
+    const identifier = parseInt(req.params.identifier, 10);
+    if (isNaN(identifier)) { res.status(400).json({ error: "Invalid identifier" }); return; }
+    const lines = parseInt(req.query.lines as string, 10) || 50;
+
+    // Try as PID first
+    let logs = getLogsFn(identifier, lines);
+    let pid = identifier;
+    let processName = `PID ${identifier}`;
+
+    // If no logs found, try as port
+    if (logs.length === 0) {
+      const processes = getProcessesData();
+      const procByPort = processes.find((p) => p.port === identifier);
+      if (procByPort) {
+        pid = procByPort.pid;
+        processName = procByPort.name || `PID ${pid}`;
+        logs = getLogsFn(pid, lines);
+      }
+    } else {
+      const processes = getProcessesData();
+      const proc = processes.find((p) => p.pid === identifier);
+      if (proc) processName = proc.name || `PID ${pid}`;
+    }
+
+    res.json({ pid, processName, logs });
   });
 
   router.post("/processes/:pid/kill", async (req, res) => {
@@ -95,6 +116,78 @@ export function createApiRouter(
         health: health.get(p.pid)?.status ?? "no-port",
       }));
     res.json({ ports: portProcesses });
+  });
+
+  // ── CLI-friendly endpoints ──────────────────────────────────────────
+
+  /**
+   * POST /api/kill
+   * Body: { portOrPid: number }
+   * Kills by PID, or looks up PID from port if no process with that PID exists.
+   */
+  router.post("/kill", async (req, res) => {
+    const { portOrPid } = req.body as { portOrPid: number };
+    if (!portOrPid || isNaN(portOrPid)) {
+      res.status(400).json({ success: false, message: "portOrPid is required" });
+      return;
+    }
+
+    try {
+      let pid = portOrPid;
+
+      // If the value is a port (no process with this PID), find by port
+      const processes = getProcessesData();
+      const procByPid = processes.find((p) => p.pid === pid);
+      if (!procByPid) {
+        const procByPort = processes.find((p) => p.port === pid);
+        if (procByPort) {
+          pid = procByPort.pid;
+        } else {
+          res.status(404).json({ success: false, message: `No process found for port or PID ${portOrPid}` });
+          return;
+        }
+      }
+
+      const result = await killFn(pid);
+      res.json(result);
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  });
+
+  /**
+   * POST /api/restart
+   * Body: { portOrPid: number }
+   * Restarts by PID, or looks up PID from port.
+   */
+  router.post("/restart", async (req, res) => {
+    const { portOrPid } = req.body as { portOrPid: number };
+    if (!portOrPid || isNaN(portOrPid)) {
+      res.status(400).json({ success: false, message: "portOrPid is required" });
+      return;
+    }
+
+    try {
+      let pid = portOrPid;
+      const processes = getProcessesData();
+
+      const procByPid = processes.find((p) => p.pid === pid);
+      if (!procByPid) {
+        const procByPort = processes.find((p) => p.port === pid);
+        if (procByPort) {
+          pid = procByPort.pid;
+        } else {
+          res.status(404).json({ success: false, message: `No process found for port or PID ${portOrPid}` });
+          return;
+        }
+      }
+
+      const cmd = getCommandFn(pid);
+      const result = await restartFn(pid, cmd);
+      res.json(result);
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message });
+    }
   });
 
   /**

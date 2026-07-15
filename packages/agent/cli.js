@@ -53,6 +53,11 @@ function startDaemonUnix(agentPath) {
 }
 
 async function startDaemon() {
+  if (await isDaemonRunning()) {
+    console.log(GREEN + "Perch daemon is already running on http://localhost:7777" + RESET);
+    process.exit(0);
+  }
+
   const agentPath = await ensureBuilt();
   if (!agentPath) {
     console.error("Perch agent not found.");
@@ -68,7 +73,7 @@ async function startDaemon() {
     startDaemonUnix(agentPath);
   }
 
-  console.log("Perch daemon started.");
+  console.log(GREEN + "Perch daemon started." + RESET);
   console.log("Open http://localhost:7777 in your browser.");
   process.exit(0);
 }
